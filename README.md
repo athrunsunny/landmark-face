@@ -10,4 +10,4 @@ python landmark/train_landmark.py --batch 32 --data data/widerface.yaml --device
 
 widerface datasets: http://shuoyang1213.me/WIDERFACE/
 
-landmark gt:coming...
+landmark gt:folder widerface_landmark_gt
