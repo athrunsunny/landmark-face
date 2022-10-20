@@ -91,7 +91,7 @@ class Detect(nn.Module):
 
 class LmkDetect(nn.Module):
     stride = None  # strides computed during build
-    export_cat = False  # onnx export cat output
+    export = False  # onnx export cat output
 
     def __init__(self, nc=80, anchors=(), ch=()):  # detection layer
         super(LmkDetect, self).__init__()
@@ -110,7 +110,7 @@ class LmkDetect(nn.Module):
     def forward(self, x):
         # x = x.copy()  # for profiling
         z = []  # inference output
-        if self.export_cat:
+        if self.export:
             for i in range(self.nl):
                 x[i] = self.m[i](x[i])  # conv
                 bs, _, ny, nx = x[i].shape  # x(bs,255,20,20) to x(bs,3,20,20,85)
