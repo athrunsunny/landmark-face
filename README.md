@@ -1,6 +1,6 @@
 # landmark-face
 
-Directly replace files with the same name in yolov5 with files in the folder
+Directly copy files (data,landmark,models,utils) to yolov5 folder
 
 # train
 
