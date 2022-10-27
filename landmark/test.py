@@ -19,11 +19,10 @@ ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 from models.experimental import attempt_load
 from utils.landmark.dataloaders import create_dataloader
 from utils.general import coco80_to_coco91_class, check_dataset, check_file, check_img_size, box_iou, \
-    scale_boxes, xyxy2xywh, xywh2xyxy, set_logging, increment_path
+     scale_boxes, xyxy2xywh, xywh2xyxy, increment_path, colorstr
 from utils.landmark.general import non_max_suppression_face
 from utils.landmark.loss import compute_loss
-from utils.metrics import ConfusionMatrix
-from utils.landmark.metrics import ap_per_classf
+from utils.metrics import ConfusionMatrix,ap_per_class
 from utils.landmark.plots import plot_imagesf, output_to_targetf, plot_study_txt
 from utils.torch_utils import select_device, time_sync
 
@@ -40,6 +39,7 @@ def test(data,
          verbose=False,
          model=None,
          dataloader=None,
+         task='val',
          save_dir=Path(''),  # for saving images
          save_txt=False,  # for auto-labelling
          save_hybrid=False,  # for hybrid auto-labelling
@@ -53,7 +53,6 @@ def test(data,
         device = next(model.parameters()).device  # get model device
 
     else:  # called directly
-        set_logging()
         device = select_device(opt.device, batch_size=batch_size)
 
         # Directories
@@ -94,7 +93,8 @@ def test(data,
         img = torch.zeros((1, 3, imgsz, imgsz), device=device)  # init img
         _ = model(img.half() if half else img) if device.type != 'cpu' else None  # run once
         path = data['test'] if opt.task == 'test' else data['val']  # path to val/test images
-        dataloader = create_dataloader(path, imgsz, batch_size, model.stride.max(), opt, pad=0.5, rect=True)[0]
+        task = task if task in ('train', 'val', 'test') else 'val'
+        dataloader = create_dataloader(path, imgsz, batch_size, model.stride.max(), opt, pad=0.5, rect=True, prefix=colorstr(f'{task}: '))[0]
 
     seen = 0
     confusion_matrix = ConfusionMatrix(nc=nc)
@@ -125,13 +125,13 @@ def test(data,
             targets[:, 2:6] *= torch.Tensor([width, height, width, height]).to(device)  # to pixels
             lb = [targets[targets[:, 0] == i, 1:] for i in range(nb)] if save_hybrid else []  # for autolabelling
             t = time_sync()
-            # output = non_max_suppression(inf_out, conf_thres=conf_thres, iou_thres=iou_thres, labels=lb)
+            #output = non_max_suppression(inf_out, conf_thres=conf_thres, iou_thres=iou_thres, labels=lb)
             output = non_max_suppression_face(inf_out, conf_thres=conf_thres, iou_thres=iou_thres, labels=lb)
             t1 += time_sync() - t
 
         # Statistics per image
         for si, pred in enumerate(output):
-            pred = torch.cat((pred[:, :5], pred[:, 15:]), 1)  # throw landmark in thresh
+            pred = torch.cat((pred[:, :5], pred[:, 15:]), 1) # throw landmark in thresh
             labels = targets[targets[:, 0] == si, 1:]
             nl = len(labels)
             tcls = labels[:, 0].tolist() if nl else []  # target class
@@ -190,7 +190,7 @@ def test(data,
                 tbox = xywh2xyxy(labels[:, 1:5])
                 scale_boxes(img[si].shape[1:], tbox, shapes[si][0], shapes[si][1])  # native-space labels
                 if plots:
-                    confusion_matrix.process_batch(pred, torch.cat((labels[:, 0:1], tbox), 1))
+                    confusion_matrix.process_batch(predn, torch.cat((labels[:, 0:1], tbox), 1))
 
                 # Per target class
                 for cls in torch.unique(tcls_tensor):
@@ -219,16 +219,15 @@ def test(data,
         # Plot images
         if plots and batch_i < 3:
             plot_imagesf(img, targets, paths, save_dir / f'val_batch{batch_i}_labels.jpg', names)  # labels
-            plot_imagesf(img, output_to_targetf(output), paths, save_dir / f'val_batch{batch_i}_pred.jpg',
-                         names)  # pred
+            plot_imagesf(img, output_to_targetf(output), paths, save_dir / f'val_batch{batch_i}_pred.jpg', names)  # pred
 
     # Compute statistics
     stats = [np.concatenate(x, 0) for x in zip(*stats)]  # to numpy
     if len(stats) and stats[0].any():
-        p, r, ap, f1, ap_class = ap_per_classf(*stats, plot=plots, save_dir=save_dir, names=names)
-        p, r, ap50, ap = p[:, 0], r[:, 0], ap[:, 0], ap.mean(1)  # [P, R, AP@0.5, AP@0.5:0.95]
+        tp, fp, p, r, f1, ap, ap_class = ap_per_class(*stats, plot=plots, save_dir=save_dir, names=names)
+        ap50, ap = ap[:, 0], ap.mean(1)  # AP@0.5, AP@0.5:0.95
         mp, mr, map50, map = p.mean(), r.mean(), ap50.mean(), ap.mean()
-        nt = np.bincount(stats[3].astype(np.int64), minlength=nc)  # number of targets per class
+        nt = np.bincount(stats[3].astype(int), minlength=nc)  # number of targets per class
     else:
         nt = torch.zeros(1)
 
@@ -306,11 +305,11 @@ if __name__ == '__main__':
     parser.add_argument('--save-hybrid', action='store_true', help='save label+prediction hybrid results to *.txt')
     parser.add_argument('--save-conf', action='store_true', help='save confidences in --save-txt labels')
     parser.add_argument('--save-json', action='store_true', help='save a cocoapi-compatible JSON results file')
-    parser.add_argument('--project', default='runs/test', help='save to project/name')
+    parser.add_argument('--project', default=ROOT / 'runs/test-lmk', help='save to project/name')
     parser.add_argument('--name', default='exp', help='save to project/name')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     opt = parser.parse_args()
-    opt.save_json |= opt.data.endswith('coco.yaml')
+    # opt.save_json |= opt.data.endswith('coco.yaml')
     opt.data = check_file(opt.data)  # check file
     print(opt)
 
