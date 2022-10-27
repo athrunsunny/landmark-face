@@ -158,11 +158,6 @@ def train(hyp, opt, device, tb_writer=None, wandb=None):
             optimizer.load_state_dict(ckpt['optimizer'])
             best_fitness = ckpt['best_fitness']
 
-        # Results
-        if ckpt.get('training_results') is not None:
-            with open(results_file, 'w') as file:
-                file.write(ckpt['training_results'])  # write results.txt
-
         # Epochs
         # start_epoch = ckpt['epoch'] + 1
         if opt.resume:
