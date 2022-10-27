@@ -93,7 +93,7 @@ class LmkDetect(nn.Module):
     stride = None  # strides computed during build
     export = False  # onnx export cat output
 
-    def __init__(self, nc=80, anchors=(), ch=()):  # detection layer
+    def __init__(self, nc=80, anchors=(), ch=(), inplace=True):  # detection layer
         super(LmkDetect, self).__init__()
         self.nc = nc  # number of classes
         # self.no = nc + 5  # number of outputs per anchor
@@ -106,6 +106,7 @@ class LmkDetect(nn.Module):
         self.register_buffer('anchors', a)  # shape(nl,na,2)
         self.register_buffer('anchor_grid', a.clone().view(self.nl, 1, -1, 1, 1, 2))  # shape(nl,1,na,1,1,2)
         self.m = nn.ModuleList(nn.Conv2d(x, self.no * self.na, 1) for x in ch)  # output conv
+        self.inplace = inplace
 
     def forward(self, x):
         # x = x.copy()  # for profiling
