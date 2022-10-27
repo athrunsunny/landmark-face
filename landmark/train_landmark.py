@@ -401,9 +401,6 @@ def train(hyp, opt, device, tb_writer=None, wandb=None):
     if rank in [-1, 0]:
         # Strip optimizers
         final = best if best.exists() else last  # final model
-        for f in [last, best]:
-            if f.exists():
-                strip_optimizer(f)  # strip optimizers
         if opt.bucket:
             os.system(f'gsutil cp {final} gs://{opt.bucket}/weights')  # upload
 
