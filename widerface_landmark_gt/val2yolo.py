@@ -99,5 +99,5 @@ def create_val_datasets(root_path):
 
 
 if __name__ == '__main__':
-    root_path = r'G:\deeplearning_dataset\widerface\WIDER_val\WIDER_val'
+    root_path = r'' # fill your dataset path '/WIDER_val'
     create_val_datasets(root_path)
