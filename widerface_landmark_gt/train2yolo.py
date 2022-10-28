@@ -188,5 +188,5 @@ def create_train_datasets(root_path):
 
 
 if __name__ == '__main__':
-    original_path = r'G:\deeplearning_dataset\widerface\WIDER_train\WIDER_train'
+    original_path = r'' # fill your dataset path '/WIDER_train'
     create_train_datasets(original_path)
