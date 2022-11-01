@@ -18,7 +18,9 @@ def non_max_suppression_face(prediction, conf_thres=0.25, iou_thres=0.45, classe
     Returns:
          detections with shape: nx16 (x1, y1, x2, y2, conf, keypoint*10, cls)
     """
-
+    if isinstance(prediction, (list, tuple)):  # YOLOv5 model in validation model, output = (inference_out, loss_out)
+        prediction = prediction[0]  # select only inference output
+        
     nc = prediction.shape[2] - 15  # number of classes
     xc = prediction[..., 4] > conf_thres  # candidates
 
