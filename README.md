@@ -4,7 +4,7 @@ Directly copy files (data,landmark,models,utils) to yolov5 folder
 
 # train
 
-python landmark/train_landmark.py --batch 32 --data data/widerface.yaml --device 0 --name facenck --weights '' --epochs 300 --cfg models/landmark/yolov5n-lmk.yaml
+python landmark/train.py --batch 32 --data data/widerface.yaml --device 0 --name facenck --weights '' --epochs 300 --cfg models/landmark/yolov5n-lmk.yaml
 
 # export 
 
