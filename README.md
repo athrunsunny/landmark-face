@@ -34,5 +34,9 @@ Put "train/label.txt" in the "WIDER_train" path
         
 "../WIDER_train" path is written to "original_path"
 
-python train2yolo.py    
+python train2yolo.py  
+
+# pretrained weight
+
+baidu yun：https://pan.baidu.com/s/11n1PqtWQXAXfHsvloEXSvg  code：y2mu
 
