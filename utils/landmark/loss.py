@@ -105,14 +105,8 @@ class ComputeLoss:
                     t[range(n), tcls[i]] = self.cp
                     lcls += self.BCEcls(ps[:, 15:], t)  # BCE
 
-                # Append targets to text file
-                # with open('targets.txt', 'a') as file:
-                #     [file.write('%11.5g ' * 4 % tuple(x) + '\n') for x in torch.cat((txy[i], twh[i]), 1)]
-
                 # landmarks loss
-                # plandmarks = ps[:,5:15].sigmoid() * 8. - 4.
                 plandmarks = ps[:, 5:15]
-
                 plandmarks[:, 0:2] = plandmarks[:, 0:2] * anchors[i]
                 plandmarks[:, 2:4] = plandmarks[:, 2:4] * anchors[i]
                 plandmarks[:, 4:6] = plandmarks[:, 4:6] * anchors[i]
@@ -197,8 +191,6 @@ class ComputeLoss:
 
             # landmarks
             lks = t[:, 6:16]
-            # lks_mask = lks > 0
-            # lks_mask = lks_mask.float()
             lks_mask = torch.where(lks < 0, torch.full_like(lks, 0.), torch.full_like(lks, 1.0))
 
             lks[:, [0, 1]] = (lks[:, [0, 1]] - gij)
